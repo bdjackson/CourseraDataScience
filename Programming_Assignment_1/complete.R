@@ -5,7 +5,7 @@ getNumComplete <- function(directory, this_id) {
 }
 
 complete <- function(directory, id = 1:332) {
-  num_complete <- unlist(lapply(id, getNumComplete, directory=directory))  
+  num_complete <- vapply(id, getNumComplete, FUN.VALUE = 1, directory=directory)
   result <- data.frame(id=id, nobs=num_complete)
   result
 }
