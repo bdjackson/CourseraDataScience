@@ -1,11 +1,12 @@
 corr <- function(directory, threshold = 0) {
-  ## 'directory' is a character vector of length 1 indicating
-  ## the location of the CSV files
+  getCompleteCases <- function(directory, this_id) {
+    this_file <- paste(directory, '/', sprintf('%03d', this_id), '.csv', sep='')
+    this_df <- read.csv(this_file)
+    this_df[complete.cases(this_df),]
+  }
   
-  ## 'threshold' is a numeric vector of length 1 indicating the
-  ## number of completely observed observations (on all
-  ## variables) required to compute the correlation between
-  ## nitrate and sulfate; the default is 0
+  list_of_cases <- lapply(1:332, getCompleteCases, directory=directory)
+  pruned_cases <- list_of_cases[lapply(list_of_cases, nrow) > threshold]
   
-  ## Return a numeric vector of correlations
+  vapply(pruned_cases, function(x) cor(x$sulfate, x$nitrate), FUN.VALUE=1)
 }
