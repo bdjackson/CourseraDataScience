@@ -19,10 +19,16 @@ GetStateList <- function(hospital.df) {
         levels(hospital.data$State)
 }
 
+# given a data frame and a state, get a list of the hospitals in this state
+GetHospitalsInState <- function(hospital.df, state) {
+        # get rows in df with state matching the target state
+        hospital.df[hospital.df$State == state, ]
+}
+
 # function which will take a state and an outcome, and find the best hospital
 # in that state for that outcome
 best <- function(state, outcome) {
-        ## Read outcome data
+        # Read outcome data
         # outcome <- ReadOutcomeFile()
 
         hospital.df <- ReadHospitalDataFile()
@@ -36,6 +42,9 @@ best <- function(state, outcome) {
         if (!(outcome %in% valid.outcomes)) {
                 stop('invalid outcome')
         }
+
+        # Get data for hospitals in this state
+        hospitals.in.state <- GetHospitalsInState(hospital.df, state)
 
         ## Return hospital name in that state with lowest 30-day death rate
 }
