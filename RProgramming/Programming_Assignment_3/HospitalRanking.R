@@ -9,9 +9,10 @@ ReadOutcomeFile <- function() {
         #   11: Hospital 30-Day Death (Mortality) Rates from Heart Attack
         #   17: Hospital 30-Day Death (Mortality) Rates from Heart Failure
         #   23: Hospital 30-Day Death (Mortality) Rates from Pneumonia
-        outcome[, 11] <- as.numeric(outcome[, 11])
-        outcome[, 17] <- as.numeric(outcome[, 17])
-        outcome[, 23] <- as.numeric(outcome[, 23])
+        outcome[,'State'] <- as.factor(outcome[,'State'])
+        outcome[, 11] <- suppressWarnings(as.numeric(outcome[, 11]))
+        outcome[, 17] <- suppressWarnings(as.numeric(outcome[, 17]))
+        outcome[, 23] <- suppressWarnings(as.numeric(outcome[, 23]))
         outcome
 }
 
@@ -37,18 +38,20 @@ PruneUnneededInfoFromOutcomeDataFrame <- function(full.data.frame) {
         pruned.data.frame
 }
 
-# ------------------------------------------------------------------------------
-# function to get the list of hospitals from hospital list file
-ReadHospitalDataFile <- function() {
-        hospital.data <- read.csv('hospital-data.csv', colClasses = 'character')
-        hospital.data[,'State'] <- as.factor(hospital.data[,'State'])
-        hospital.data
-}
+# # ------------------------------------------------------------------------------
+# # function to get the list of hospitals from hospital list file
+# ReadHospitalDataFile <- function() {
+#         hospital.data <- read.csv('hospital-data.csv', colClasses = 'character')
+#         hospital.data[,'State'] <- as.factor(hospital.data[,'State'])
+#         hospital.data
+# }
 
 # ------------------------------------------------------------------------------
 GetStateList <- function(hospital.df) {
-        hospital.data <- ReadHospitalDataFile()
-        levels(hospital.data$State)
+        levels(hospital.df$state)
+
+        # hospital.data <- ReadHospitalDataFile()
+        # levels(hospital.data$State)
 }
 
 # ------------------------------------------------------------------------------
@@ -76,20 +79,13 @@ CheckValidOutcome <- function(outcome) {
 }
 
 # ------------------------------------------------------------------------------
-# function which will take a state and an outcome, and find the best hospital
-# in that state for that outcome
-best <- function(state, outcome) {
-        rankhospital(state, outcome, 'best')
-}
-
-# ------------------------------------------------------------------------------
-rankhospital <- function(state, outcome, num = 'best') {
+RankHospital <- function(state, outcome, num = 'best') {
         # Read outcome data
         hospital.data <- ReadOutcomeFile()
         hospital.data <- PruneUnneededInfoFromOutcomeDataFrame(hospital.data)
 
-        hospital.df <- ReadHospitalDataFile()
-        state.list <- GetStateList(hospital.df)
+        # hospital.df <- ReadHospitalDataFile()
+        state.list <- GetStateList(hospital.data)
 
         # Check that state and outcome are valid
         CheckValidState(state, state.list)
@@ -105,11 +101,25 @@ rankhospital <- function(state, outcome, num = 'best') {
 
         ranked.list <- RankHospitalsByOutcome(hospital.data.in.state, outcome)
 
-        # print('ranked list:')
-        # print(ranked.list)
-
         # get hospital in position 'num'
+        # print(ranked.list)
+        if (num > nrow(ranked.list)) {
+                num = nrow(ranked.list)
+        }
         ranked.list[[num,'name']]
+}
+
+# ------------------------------------------------------------------------------
+# function which will take a state and an outcome, and find the best hospital
+# in that state for that outcome
+best <- function(state, outcome) {
+        rankhospital(state, outcome, 'best')
+}
+
+# ------------------------------------------------------------------------------
+# Alias to RankHospital function to align with the assignment naming
+rankhospital <- function(state, outcome, num = 'best') {
+        RankHospital(state, outcome, num)
 }
 
 # ------------------------------------------------------------------------------
@@ -128,12 +138,51 @@ InterpretPosition <- function(num, hospital.df) {
                 num <- 1
         }
         else if (num == 'worst') {
-                num <- ncol(hospital.df)
+                num <- nrow(hospital.df)
                 # num <- NCOL(hospitals.in.state)
         }
-        else if (num > ncol(hospital.df)) {
+        else if (num > nrow(hospital.df)) {
                 num <- NA
         }
 
         num
+}
+
+# ------------------------------------------------------------------------------
+rankall <- function(outcome, num='best') {
+        # Read outcome data
+        hospital.data <- ReadOutcomeFile()
+        hospital.data <- PruneUnneededInfoFromOutcomeDataFrame(hospital.data)
+
+        # hospital.df <- ReadHospitalDataFile()
+        state.list <- GetStateList(hospital.data)
+
+        # Check that state and outcome are valid
+        CheckValidOutcome(outcome)
+
+        # function which will rank the hospitals within a given state
+        RankHospitalInState <- function(state) {
+                # get hospital data in this state only
+                hospital.data.in.state <-
+                        hospital.data[hospital.data$state == state,]
+
+                # do ranking
+                ranked.list <-
+                        RankHospitalsByOutcome(hospital.data.in.state, outcome)
+
+                # get hospital in position 'num'
+                this.num <- InterpretPosition(num, ranked.list)
+                if (is.na(this.num)) {
+                        return('<NA>')
+                }
+                ranked.list[[this.num,'name']]
+        }
+
+        hospital.rankings <- vapply( state.list
+                                   , RankHospitalInState
+                                   , FUN.VALUE='a'
+                                   )
+        hospital.rankings
+
+        data.frame(hospital=hospital.rankings, state=state.list)
 }
