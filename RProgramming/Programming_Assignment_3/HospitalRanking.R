@@ -96,19 +96,15 @@ RankHospital <- function(state, outcome, num = 'best') {
         # get hospital data in this state only
         hospital.data.in.state <- hospital.data[hospital.data$state == state,]
 
+        # rank hospitals
+        ranked.list <- RankHospitalsByOutcome(hospital.data.in.state, outcome)
+
         # is this position valid?
-        num <- InterpretPosition(num, hospital.data.in.state)
+        num <- InterpretPosition(num, ranked.list)
         if (is.na(num)) {
                 return(NA)
         }
 
-        # rank hospitals
-        ranked.list <- RankHospitalsByOutcome(hospital.data.in.state, outcome)
-
-        # get hospital in position 'num'
-        if (num > nrow(ranked.list)) {
-                num = nrow(ranked.list)
-        }
         ranked.list[[num,'name']]
 }
 
@@ -145,7 +141,6 @@ RankAll <- function(outcome, num='best') {
                                    , RankHospitalInState
                                    , FUN.VALUE='a'
                                    )
-        hospital.rankings
 
         data.frame(hospital=hospital.rankings, state=state.list)
 }
