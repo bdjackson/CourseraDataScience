@@ -77,7 +77,7 @@ RankHospitalsByOutcome <- function(hospital.df, outcome) {
 
         # First order by name, then by outcome
         hospital.df <- hospital.df[order(hospital.df[,'name']), ]
-        ranked.list <- hospital.df[order(hospital.df[,outcome]), ]
+        hospital.df[order(hospital.df[,outcome]), ]
 }
 
 # ------------------------------------------------------------------------------
