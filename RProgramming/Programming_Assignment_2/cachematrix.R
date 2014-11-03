@@ -32,7 +32,7 @@ makeCacheMatrix <- function(x = matrix()) {
         set <- function(y) {
                 checkSquare(y)
                 x <<- y
-                m <<- NULL
+                inverse <<- NULL
         }
 
         # return the current matrix
