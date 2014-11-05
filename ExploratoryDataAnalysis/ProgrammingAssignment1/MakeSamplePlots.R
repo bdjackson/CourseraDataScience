@@ -2,10 +2,8 @@
 # is huge, and we likely don't want to run over the full data set every time,
 # we can strip out only certain dates. 
 # ==============================================================================
-# library(dplyr)
-library(data.table)
 
-# ==============================================================================
+# Some default file names in case the use doesn't want to supply these
 default.full.file.name <- 'household_power_consumption.txt'
 default.binary.file.name <- 'household_power_consumption.skim.rds'
 
