@@ -23,3 +23,8 @@ Clone the repo here:
 ```
 git clone git@github.com:bdjackson/ExData_Plotting1.git
 ```
+
+## Structure of the solution
+For this assignment, I created a single file `MakeSamplePlots.R` which includes helper functions to read/skim the dataset, as well as create all of our plots.
+As the assignment requested, I also created files named `plot1.R`, etc. These files simply call functions from the `MakeSamplePlots.R` file.
+
