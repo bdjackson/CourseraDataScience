@@ -1,6 +1,13 @@
-# This is a script to clean the power consumption data file. Since, the dataset
-# is huge, and we likely don't want to run over the full data set every time,
-# we can strip out only certain dates. 
+# This is a script to make some sample plots from the power consumption data
+# file. First, we read in the file, and clean the data frame to include only the
+# subset of the data we are interested in. Then, we can make plots, from the
+# tidy data frame 
+# Since, the dataset is large, and we don't want to run over the full data
+# set every time we make a new plot, we can pre-process the dataset. This
+# involves filtering out the dates we would like to analyze, and writing the
+# pruned data frame to a file which can be read on subsequent runs. If the
+# binary cache file does not exist, this pre-processing step is called on the
+# default input dataset
 # ==============================================================================
 
 # Some default file names in case the use doesn't want to supply these
@@ -17,7 +24,6 @@ ReadDataFile <- function(in.file.name = default.full.file.name) {
                         , colClasses = 'character'
                         , quote = ''
                         )
-              
 
         # coerce columns into the correct data formats
         df <- mutate(df, Time = paste(Date,Time, sep='-'))
@@ -35,7 +41,8 @@ ReadDataFile <- function(in.file.name = default.full.file.name) {
 }
 
 # ------------------------------------------------------------------------------
-# function to read input file, call the trimming functions and 
+# read the raw input file, filter the rows we want, then write the data frame to
+# disk to be read later
 CreateSubsetFile <- function( in.file.name = default.full.file.name
                             , out.file.name = default.binary.file.name
                             ) {
@@ -51,7 +58,7 @@ CreateSubsetFile <- function( in.file.name = default.full.file.name
 }
 
 # ------------------------------------------------------------------------------
-# function to retreive data frame from cached file
+# Retreive data frame from cached file
 LoadDataFrame <- function(in.file.name = default.binary.file.name) {
         if (!file.exists(in.file.name)) {
                 print("The chached data frame file does not exist")
@@ -62,6 +69,7 @@ LoadDataFrame <- function(in.file.name = default.binary.file.name) {
 }
 
 # ------------------------------------------------------------------------------
+# Create plot 1
 CreatePlot1 <- function(in.file.name = default.binary.file.name) {
         # load cached data frame
         df <- LoadDataFrame(in.file.name)
@@ -83,6 +91,7 @@ CreatePlot1 <- function(in.file.name = default.binary.file.name) {
 }
 
 # ------------------------------------------------------------------------------
+# Create plot 1
 CreatePlot2 <- function(in.file.name = default.binary.file.name) {
         # load cached data frame
         df <- LoadDataFrame(in.file.name)
@@ -90,7 +99,7 @@ CreatePlot2 <- function(in.file.name = default.binary.file.name) {
         # open png device
         png(file = 'plot2.png', bg = 'transparent')
 
-        # Draw histogram
+        # Draw line plot
         with( df, plot( Global_active_power ~ Time
                       , xlab = ''
                       , ylab = 'Global Active Power (kilowatts)'
@@ -103,6 +112,7 @@ CreatePlot2 <- function(in.file.name = default.binary.file.name) {
 }
 
 # ------------------------------------------------------------------------------
+# Create plot 1
 CreatePlot3 <- function(in.file.name = default.binary.file.name) {
         # load cached data frame
         df <- LoadDataFrame(in.file.name)
@@ -110,13 +120,14 @@ CreatePlot3 <- function(in.file.name = default.binary.file.name) {
         # open png device
         png(file = 'plot3.png', bg = 'transparent')
 
-        # Draw histogram
+        # create empty frame 
         with( df, plot( Sub_metering_1 ~ Time
                        , xlab = ''
                        , ylab = 'Energy sub metering'
                        , type = 'n'
                        )
             )
+        # Draw three overlaping line graphs
         with( df, points( Sub_metering_1 ~ Time
                         , type = 'l'
                         , col = 'black'
@@ -133,6 +144,7 @@ CreatePlot3 <- function(in.file.name = default.binary.file.name) {
                         )
             )
 
+        # create legend!
         legend( 'topright'
               , col = c('black', 'red', 'blue')
               , legend = paste('Sub_metering_', 1:3)
@@ -144,6 +156,7 @@ CreatePlot3 <- function(in.file.name = default.binary.file.name) {
 }
 
 # ------------------------------------------------------------------------------
+# Create plot 1
 CreatePlot4 <- function(in.file.name = default.binary.file.name) {
         # load cached data frame
         df <- LoadDataFrame(in.file.name)
@@ -154,7 +167,7 @@ CreatePlot4 <- function(in.file.name = default.binary.file.name) {
         # set up 2x2 frame
         par(mfrow = c(2,2))
 
-        # Draw histogram 1
+        # Draw upper left line graph 1
         with( df, plot( Global_active_power ~ Time
                       , xlab = ''
                       , ylab = 'Global Active Power'
@@ -162,7 +175,7 @@ CreatePlot4 <- function(in.file.name = default.binary.file.name) {
                       )
             )
 
-        # Draw histogram 2
+        # Draw upper right line graph
         with( df, plot( Voltage ~ Time
                       , xlab = 'datetime'
                       , ylab = 'Voltage'
@@ -170,13 +183,15 @@ CreatePlot4 <- function(in.file.name = default.binary.file.name) {
                       )
             )
 
-        # Draw histogram 3
+        # Draw lower left plot
+        # first make empty frame
         with( df, plot( Sub_metering_1 ~ Time
                        , xlab = ''
                        , ylab = 'Energy sub metering'
                        , type = 'n'
                        )
             )
+        # Fill with three overlapping line plots
         with( df, points( Sub_metering_1 ~ Time
                         , type = 'l'
                         , col = 'black'
@@ -193,6 +208,7 @@ CreatePlot4 <- function(in.file.name = default.binary.file.name) {
                         )
             )
 
+        # legend!
         legend( 'topright'
               , col = c('black', 'red', 'blue')
               , legend = paste('Sub_metering_', 1:3)
@@ -200,7 +216,7 @@ CreatePlot4 <- function(in.file.name = default.binary.file.name) {
               , box.lwd = 0
               )
 
-        # Draw histogram 4
+        # Draw lower right plot
         with( df, plot( Global_reactive_power ~ Time
                       , xlab = 'datetime'
                       , ylab = 'Global_reactive_power'
