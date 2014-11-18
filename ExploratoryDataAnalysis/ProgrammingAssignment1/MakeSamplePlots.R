@@ -2,13 +2,30 @@
 # file. First, we read in the file, and clean the data frame to include only the
 # subset of the data we are interested in. Then, we can make plots, from the
 # tidy data frame 
+#
+# This script assumes the dataset has been downloaded from the web, and
+# unzipped. For instructions, see the README file.
+#
 # Since, the dataset is large, and we don't want to run over the full data
 # set every time we make a new plot, we can pre-process the dataset. This
 # involves filtering out the dates we would like to analyze, and writing the
-# pruned data frame to a file which can be read on subsequent runs. If the
-# binary cache file does not exist, this pre-processing step is called on the
-# default input dataset
+# filtered data frame to a file which can be read on subsequent runs.
+#
+# The data frame is read and filtered using ReadDataFile
+# The resulting data frame is cached using CreateSubsetFile
+# This cached data frame can be read using LoadDataFrame
+#
+# If the binary cache file does not exist, this pre-processing step is called on
+# the default input dataset
+# 
+# We can then create the plots, and write to a file using one of the following
+# functions:
+# CreatePlot1: create plot 1
+# CreatePlot2: create plot 2
+# CreatePlot3: create plot 3
+# CreatePlot4: create plot 4
 # ==============================================================================
+library('dplyr')
 
 # Some default file names in case the use doesn't want to supply these
 default.full.file.name <- 'household_power_consumption.txt'
@@ -26,17 +43,20 @@ ReadDataFile <- function(in.file.name = default.full.file.name) {
                         )
 
         # coerce columns into the correct data formats
+        # Add the date to the time column so, when converted to POSIXct, the
+        # time variable includes both the date and tiem
         df <- mutate(df, Time = paste(Date,Time, sep='-'))
         df <- mutate(df, Date = as.POSIXct(Date, format='%d/%m/%Y'))
         df <- mutate(df, Time = as.POSIXct(Time, format='%d/%m/%Y-%H:%M:%S'))
 
+        # coercee the remaining columns as numeric
         col.names = names(df)
         for (this.col.name in col.names[3:NROW(col.names)]) {
                 suppressWarnings(
                         df[,this.col.name] <- as.numeric(df[,this.col.name]) )
         }
 
-        # Return data frame
+        # Return data frame as a tbl_df object
         tbl_df(df)
 }
 
@@ -91,7 +111,7 @@ CreatePlot1 <- function(in.file.name = default.binary.file.name) {
 }
 
 # ------------------------------------------------------------------------------
-# Create plot 1
+# Create plot 2
 CreatePlot2 <- function(in.file.name = default.binary.file.name) {
         # load cached data frame
         df <- LoadDataFrame(in.file.name)
@@ -112,7 +132,7 @@ CreatePlot2 <- function(in.file.name = default.binary.file.name) {
 }
 
 # ------------------------------------------------------------------------------
-# Create plot 1
+# Create plot 3
 CreatePlot3 <- function(in.file.name = default.binary.file.name) {
         # load cached data frame
         df <- LoadDataFrame(in.file.name)
@@ -156,7 +176,7 @@ CreatePlot3 <- function(in.file.name = default.binary.file.name) {
 }
 
 # ------------------------------------------------------------------------------
-# Create plot 1
+# Create plot 4
 CreatePlot4 <- function(in.file.name = default.binary.file.name) {
         # load cached data frame
         df <- LoadDataFrame(in.file.name)
