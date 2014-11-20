@@ -11,7 +11,7 @@ The data in each row is the mean for each of 66 variables given this subject and
 ## Variable summary
 
 The following table is a summary of the variables contained in each of the columns in the tidy data set.
-Recall, that **all of the variables** appart from subject and activity represent the mean of the measurement from the phone data (this is not stated explicitely in the table).
+Recall, that **all of the variables** apart from subject and activity represent the mean of the measurement from the phone data (this is not stated explicitely in the table).
 
 Variable name             |  Description
 :-------------            |  :-----------
