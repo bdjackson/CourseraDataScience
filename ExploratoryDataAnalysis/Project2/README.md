@@ -31,6 +31,8 @@ This can be done by grouping the NEI data by
 
 ![plot 1](plot1.png)
 
+TODO add summary of result
+
 ### Question 2
 Have total emissions from PM2.5 decreased in the Baltimore City, Maryland
 (fips == "24510") from 1999 to 2008? Use the base plotting system to make a plot
@@ -46,6 +48,7 @@ This can be done by grouping the NEI data by
 
 ![plot 2](plot2.png)
 
+TODO add summary of result
 
 ### Question 3
 Of the four types of sources indicated by the type (point, nonpoint, onroad,

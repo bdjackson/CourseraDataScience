@@ -28,10 +28,29 @@ Problem1 <- function() {
   # this is done implicitly because the data is grouped by year. Therefore, the
   # summarise function returns a data frame with two columns whcih can directly
   # be plotted
-  plot(summarise(grouped.nei, sum(Emissions)),
+  summary <- summarise(grouped.nei, emissions = sum(Emissions)/1e6) 
+  plot(summary,
        xlab = 'Year',
-       ylab = 'Total emmisions',
-       main = 'Total emissions by year')
+       ylab = 'Total emmisions [in millions of tons]',
+       main = 'Total emissions of PM2.5 by year')
+
+  # perform linear fit to data
+  linear.model <- lm(emissions ~ year, summary)
+  abline(linear.model, lwd = 2)
+
+  # extract the slope and R^2 value from the fit
+  slope <- linear.model[['coefficients']]['year']
+  r.squared <- summary(linear.model)[['adj.r.squared']]
+
+  # create labels and draw them to the plot
+  slope.label <- bquote(Slope == .(format(slope, digits = 2)))
+  r.sq.label <- bquote(italic(R)^2 == .(format(r.squared, digits = 3)))
+
+  x.pos <- 2006
+  y.pos <- 7.1
+  y.spacing <- 0.35             
+  text(x.pos, y.pos, slope.label, adj = c(0,0)); y.pos <- y.pos - y.spacing
+  text(x.pos, y.pos, r.sq.label , adj = c(0,0)); y.pos <- y.pos - y.spacing
 
   dev.off()
 }
@@ -53,10 +72,29 @@ Problem2 <- function() {
   # this is done implicitly because the data is grouped by year. Therefore, the
   # summarise function returns a data frame with two columns whcih can directly
   # be plotted
-  plot(summarise(grouped.nei, sum(Emissions)),
+  summary <- summarise(grouped.nei, emissions = sum(Emissions)/1e3)
+  plot(summary,
        xlab = 'Year',
-       ylab = 'Total emmisions',
-       main = 'Total emissions by year in Baltimore City, MD')
+       ylab = 'Total emmisions [in thousands of tons]',
+       main = 'Total emissions of PM2.5 by year in Baltimore City, MD')
+
+  # perform linear fit to data
+  linear.model <- lm(emissions ~ year, summary)
+  abline(linear.model, lwd = 2)
+
+  # extract the slope and R^2 value from the fit
+  slope <- linear.model[['coefficients']]['year']
+  r.squared <- summary(linear.model)[['adj.r.squared']]
+
+  # create labels and draw them to the plot
+  slope.label <- bquote(Slope == .(format(slope, digits = 2)))
+  r.sq.label <- bquote(italic(R)^2 == .(format(r.squared, digits = 3)))
+
+  x.pos <- 2006
+  y.pos <- 3.2
+  y.spacing <- 0.12             
+  text(x.pos, y.pos, slope.label, adj = c(0,0)); y.pos <- y.pos - y.spacing
+  text(x.pos, y.pos, r.sq.label , adj = c(0,0)); y.pos <- y.pos - y.spacing
 
   dev.off()
 }
