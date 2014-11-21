@@ -24,10 +24,28 @@ Have total emissions from PM2.5 decreased in the United States from 1999 to
 2008? Using the base plotting system, make a plot showing the total PM2.5
 emission from all sources for each of the years 1999, 2002, 2005, and 2008.
 
+This can be done by grouping the NEI data by
+- Grouping NEI data by year
+- Use the `summarise` function to compute the sum of the emissions for each year (group)
+- Plot the output of this `summarise` call
+
+![plot 1](plot1.png)
+
 ### Question 2
 Have total emissions from PM2.5 decreased in the Baltimore City, Maryland
 (fips == "24510") from 1999 to 2008? Use the base plotting system to make a plot
 answering this question.
+
+This is very similar to question 1.
+
+This can be done by grouping the NEI data by
+- Filtering the NEI data set, selecting only Baltimore City, MD
+- Grouping by year
+- Use the `summarise` function to compute the sum of the emissions for each year (group)
+- Plot the output of this `summarise` call
+
+![plot 2](plot2.png)
+
 
 ### Question 3
 Of the four types of sources indicated by the type (point, nonpoint, onroad,
