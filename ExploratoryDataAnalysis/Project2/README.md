@@ -60,40 +60,61 @@ nonroad) variable, which of these four sources have seen decreases in emissions
 from 1999–2008 for Baltimore City? Which have seen increases in emissions from
 1999–2008? Use the ggplot2 plotting system to make a plot answer this question.
 
-**TODO** add text
+This is done by
+- Filtering the data for Baltimore City
+- Grouping by year and type
+- Use the `summarise` function to compute the sum of the emissions for each year (group)
+- Plot the output of this `summarise` call
+  - Using the facet_grid geom, we can plot each of the types of polutants on a different facet
 
 ![plot 3](plot3.png)
 
-**TODO** add text
+The fit quality for all of four emission types is fairly bad, however NON-ROAD and NONPOINT are roughly sloping downward. The other two are consistent with no slope.
 
 ### Question 4
 Across the United States, how have emissions from coal combustion-related
 sources changed from 1999–2008?
 
-**TODO** add text
+This can be done by grouping the NEI data by
+- Filtering the NEI data set, selecting only Baltimore City, MD
+- Fitlering entries in the NEI data set coming from coal combustion sources
+- Grouping by year
+- Use the `summarise` function to compute the sum of the emissions for each year (group)
+- Plot the output of this `summarise` call
 
 ![plot 4](plot4.png)
 
-**TODO** add text
+There is a weak downward slope, however the fit is not convincing.
 
 ### Question 5
 How have emissions from motor vehicle sources changed from 1999–2008 in
 Baltimore City?
 
-**TODO** add text
+This can be done by grouping the NEI data by
+- Filtering the NEI data set, selecting only Baltimore City, MD
+- Fitlering entries in the NEI data set coming from motor vehicle sources
+- Grouping by year
+- Use the `summarise` function to compute the sum of the emissions for each year (group)
+- Plot the output of this `summarise` call
 
 ![plot 5](plot5.png)
 
-**TODO** add text
+There is a weak downward slope, however the fit is not convincing.
 
 ### Question 6
 Compare emissions from motor vehicle sources in Baltimore City with emissions
 from motor vehicle sources in Los Angeles County, California (fips == "06037").
 Which city has seen greater changes over time in motor vehicle emissions?
 
-**TODO** add text
+This can be done by grouping the NEI data by
+- Filtering the NEI data set, selecting only Baltimore City, MD and LA
+- Fitlering entries in the NEI data set coming from motor vehicle sources
+- Grouping by year and city
+- Use the `summarise` function to compute the sum of the emissions for each year (group)
+- Plot the output of this `summarise` call
+  - Using the facet_grid geom, we can plot each city on a different facet
 
 ![plot 6](plot6.png)
 
-**TODO** add text
+Baltimore has a slight downward slope, however LA is fairly flat. Ultimately, both are roughly consistent with no slope.
 
