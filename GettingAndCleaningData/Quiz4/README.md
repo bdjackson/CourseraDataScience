@@ -84,4 +84,22 @@ Next, we check to see how many countries have a fiscal year that ends in June.
 
 ## Question 5
 
+Obtain the financial data for amazon
+```
+library(quantmod)
+amzn = getSymbols("AMZN",auto.assign=FALSE)
+sampleTimes = index(amzn) 
+sampleTimes <- ymd(sampleTimes)
+```
 
+Count the number of samples taken in 2012
+```
+> sum(year(sampleTimes) == 2012)
+[1] 250
+```
+
+Count the number of samples taken in 2012 on a Monday
+```
+> sum(year(sampleTimes) == 2012 & wday(sampleTimes) == 2)
+[1] 47
+```
