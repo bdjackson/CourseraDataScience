@@ -18,3 +18,6 @@ jeff.jpg
 *.Rproj
 UCI HAR Dataset
 RepData_PeerAssessment1
+*_cache
+*_files
+*.csv.bz2
