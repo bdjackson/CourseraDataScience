@@ -1,0 +1,396 @@
+---
+title: "Storm Data Analysis in the United States"
+author: 'Brett Jackson'
+output: html_document
+---
+## Synopsis
+
+For this analysis, storm data from the United States were analyzed to determine
+the storm types which have the largest health and economic effects. The number
+of fatalties and injuries were considered when evaluating the health impact of
+storms, and the amount of damage to property and crops was considered when
+measuring the economic impact. Both the total effect over the full dataset and
+the median effects were considered.
+
+## Data Processing
+For this analysis of storm data, the NOAA Storm Database was used. This
+available online and can be downloaded here:
+
+```{r, echo=FALSE}
+# Set the output options for large and small numbers
+options(scipen = 5, digits = 2)
+```
+
+The following packages were used in this study:
+
+```{r, message=FALSE, warning=FALSE}
+library(dplyr)
+library(tidyr)
+library(reshape2)
+library(ggplot2)
+```
+
+```{r, eval=FALSE}
+#download.file('https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2',
+#              destfile = 'StormData.csv.bz2',
+#              method = 'curl')
+```
+
+The data file containes many variable which are not necessary for this analysis.
+For the purposes of this analysis, the variables of interest are:
+
+- `BGN_DATE`: Beginning date of the storm
+- `EVTYPE`: Storm classification
+- `FATALITIES`: Number of fatalities attributed to each storm
+- `INJURIES`: Number of injuries attributed to each storm
+- `PROPDMG`: Property damage from each storm measured in USD
+- `CROPDMG`: Damage to crops from each storm measured in USD
+
+The other variables not used in this study are dropped from the dataset.
+
+Some of these variables are converted into more convenient units, and
+additional variables are derived from the dataset. These include:
+
+- `DECADE`: Decade when the storm took place
+- `PROPDMG`: Recast to billions of USD
+- `CROPDMG`: Recast to billions of USD
+
+```{r, cache=TRUE}
+raw.data <- read.csv(bzfile("StormData.csv.bz2"))
+```
+
+```{r, cache=TRUE}
+# scale factors for converting units
+scale.factor <- c('h' = 1e2, 'H' = 1e2,
+                  'k' = 1e3, 'K' = 1e3,
+                  'm' = 1e6, 'M' = 1e6,
+                  'b' = 1e9, 'B' = 1e9)
+
+storm.data <- raw.data %>%
+  # select only variables of interest
+  select(BGN_DATE, BGN_TIME, EVTYPE, FATALITIES, INJURIES,
+         PROPDMG, PROPDMGEXP, CROPDMG, CROPDMGEXP) %>%
+  # recast EVTYPE to a factor
+  mutate(EVTYPE = as.factor(EVTYPE)) %>%
+  # combine BGN_DATE and BGN_TIME and cast as a POSIXct time object
+  mutate(BGN_DATE = gsub(' 0:00:00', '', BGN_DATE),
+         BGN_DATE_TIME = paste(BGN_DATE, sprintf('%04d', BGN_TIME)),
+         BGN_DATE = as.POSIXct(BGN_DATE, format = '%m/%d/%Y')) %>%
+  # extract the decade from the date
+  mutate(DECADE = 10*floor(as.integer(strftime(BGN_DATE,
+                                               format = '%Y'))/10))
+
+# Put property and crop damage into the right units. First, account for the
+# exponents (h/k/m/b), and then convert to billions of dollars
+storm.data <- storm.data %>%
+  mutate(PROPDMGEXP = as.character(PROPDMGEXP),
+         CROPDMGEXP = as.character(CROPDMGEXP),
+         PROPDMG.SF = ifelse(PROPDMGEXP %in% names(scale.factor),
+                             scale.factor[PROPDMGEXP],
+                             1.),
+         CROPDMG.SF = ifelse(CROPDMGEXP %in% names(scale.factor),
+                             scale.factor[CROPDMGEXP],
+                             1.),
+         PROPDMG = PROPDMG * PROPDMG.SF,
+         CROPDMG = CROPDMG * CROPDMG.SF,
+         PROPDMG = PROPDMG/1.e9,
+         CROPDMG = CROPDMG/1.e9)
+
+# drop columns from the data frame now that we are done with them
+storm.data <- storm.data %>%
+  select(-BGN_TIME, -BGN_DATE_TIME, -PROPDMGEXP, -CROPDMGEXP, -PROPDMG.SF,
+         -CROPDMG.SF)
+
+```
+
+This dataset includes many entries which should be grouped together. For example
+There are many entries for hurricanes which have different names in the EVTYPE
+column. There are also several typographic errors.
+```{r, cache = TRUE}
+GroupStormTypes <- function(df, to.match, new.type) {
+#   matches <- grepl(to.match, gsub(' ', '', df$EVTYPE), ignore.case = TRUE)
+  matches <- grepl(to.match, df$EVTYPE, ignore.case = TRUE)
+  df[matches, 'EVTYPE'] = rep(toupper(new.type), times = sum(matches))
+  df
+}
+
+mod.storm.data <- mutate(storm.data, EVTYPE = as.character(EVTYPE))
+mod.storm.data[, 'EVTYPE'] <- toupper(mod.storm.data[, 'EVTYPE'])
+
+replace.list = c('tornado' = 'tornado',
+                 'hurricane' = 'hurricane',
+                 'tropical storm' = 'tropical storm',
+                 'torndao' = 'tornado',
+                 'blizzard' = 'blizzard',
+                 'coastal[ ]*storm' = 'coastal storm',
+                 'tstm' = 'thunderstorm',
+                 'th.*[or]+m' = 'thunderstorm',
+                 'tunderstorm' = 'thunderstorm',
+                 'thundersnow' = 'thundersnow',
+                 'avalanch*e' = 'avalanche',
+                 'hail' = 'hail',
+                 'li[ghtn]*ing' = 'lightning',
+                 'flood' = 'flood',
+                 'urban.*stream fld' = 'flood',
+                 'urban.*sml' = 'urban and small stream',
+                 'wnd' = 'wind',
+                 'high wind' = 'wind',
+                 '^[ ]*wind$' = 'wind',
+                 'winds' = 'wind',
+                 'wind gusts' = 'wind',
+                 'wind damage' = 'wind',
+                 'wind storm' = 'wind',
+                 '[fv]og' = 'fog',
+                 'wint.*mix' = 'wintery mix',
+                 'fire' = 'fire',
+                 'rain' = 'rain',
+                 'micr*oburst' = 'microburst',
+                 'excessive rain' = 'excessive rain',
+                 'frost' = 'frost',
+                 'heavy rain' = 'heavy rain',
+                 'heavy shower' = 'heavy rain',
+                 'heavy snow' = 'heavy snow',
+                 'blowing snow' = 'blowing snow',
+                 'heavy swells' = 'high swells',
+                 'high  swells' = 'high swells',
+                 'heat wave' = 'heat wave',
+                 'volcanic' = 'volcanic',
+                 'wa[yt]*erspout' = 'waterspout',
+                 'heavy snow' = 'heavy snow',
+                 '   high surf advisory' = 'high surf advisory',
+                 'funnel' = 'funnel cloud',
+                 'dust[ ]*storm' = 'dust storm',
+                 'dust devil' = 'dust storm',
+                 'glaze' = 'glaze',
+                 'erosio*n' = 'erosion',
+                 'landslide' = 'landslide',
+                 'winter storm' = 'winter storm',
+                 'mudslide' = 'mudslide',
+                 'hyp[oer]*thermia' = 'hypothermia',
+                 'blow-out tide' = 'blow-out tide',
+                 'extreme cold' = 'extreme cold',
+                 'record  cold' = 'record cold',
+                 'dam break' = 'dam failure',
+                 'bitter wind chill' = 'wind chill',
+                 'extreme wind[ ]*chill' = 'wind chill',
+                 'flash floooding' = 'flood',
+                 'drought' = 'drought',
+                 'ice.*road' = 'ice',
+                 'ice.*snow' = 'ice and snow',
+                 'early snowfall' = 'early snow',
+                 'falling snow/ice' = 'snow',
+                 'gradient wind' = 'wind',
+                 'gusty.*wind' = 'wind',
+                 'heavy precipatation' = 'heavy precipitation',
+                 'high surf' = 'high surf',
+                 'lake-effect snow' = 'lake effect snow',
+                 'snow.*ice' = 'snow',
+                 'snow.*cold' = 'snow',
+                 'snow and' = 'snow',
+                 'snow shower' = 'snow',
+                 'snow squall' = 'snow squall',
+                 'marine mishap' = 'marine accident',
+                 'hazardous surf' = 'heavy surf and wind',
+                 'and$' = '?',
+                 '^none$' = '?',
+                 'apache county' = '?',
+                 '^other?' = '?',
+                 '^excessive$' = '?',
+                 '^southeast$' = '?',
+                 '^high$' = '?',
+                 'summary' =  'summary')
+
+for (key in names(replace.list)) {
+  mod.storm.data <- GroupStormTypes(mod.storm.data,
+                                    key,
+                                    replace.list[[key]])
+}
+
+mod.storm.data <- mutate(mod.storm.data, EVTYPE = as.factor(EVTYPE))
+```
+
+This data frame is then transformed to allow for easier analysis. The
+data frame is "melted" into a long format where each storm type has four
+entries. One each for fatalities, injuries, property damage, and crop damage.
+
+```{r}
+all.effects <- mod.storm.data %>%
+  select(EVTYPE, FATALITIES, INJURIES, PROPDMG, CROPDMG) %>%
+  melt(id = 'EVTYPE')
+```
+
+There are multiple ways of evaluating the effect of a storm. These include
+looking at the total healh effects and damage, or the median.
+
+```{r}
+# Function to apply a cut on the data frame. This function takes as input a
+# data frame and an integer, head.size. head.size represents the number of
+# rows selected from the sorted list from each effect category.
+ApplyCuts <- function(df, head.size = 5) {
+  # Function which assigns a rank to each entry in a given column  
+  AssignRank <- function(unsorted.df, column.to.rank) {
+    # sort the data frame based on the column of choice
+    sorted.df <- unsorted.df[order(unsorted.df[,column.to.rank],
+                                   decreasing = TRUE), ]
+    
+    # assign a rank based on the sorted data frame (calling order on a sorted
+    # list will just give the position)
+    sorted.df[, paste('rank',
+                      column.to.rank,
+                      sep = '.')] = order(sorted.df[,column.to.rank],
+                                          decreasing = TRUE)
+    # return the sorted data frame
+    sorted.df
+  }
+  
+  for (category in c('FATALITIES', 'INJURIES', 'PROPDMG', 'CROPDMG')) {
+    df <- AssignRank(df, category)
+  }
+  
+  # filter based on the rank, and drop the rank columns. Then return the
+  # filtered data frame
+  filter(df,
+         rank.FATALITIES <=head.size |
+         rank.INJURIES <= head.size |
+         rank.PROPDMG <= head.size |
+         rank.CROPDMG <= head.size) %>%
+    select(-rank.FATALITIES, -rank.INJURIES, -rank.PROPDMG, -rank.CROPDMG)
+}
+```
+
+
+### Total effect
+There are many storm types in this dataset, however, only the most damaging are
+of interest for this study. The data can be trimmed to focus on these storms of
+interest. Only the top 5 storm types were selected for each health or economic
+effect.
+
+```{r}
+total.effects <- all.effects %>%
+  # find total effect for each sorm type
+  dcast(EVTYPE ~ variable, sum) %>%
+  ApplyCuts(head.size = 5)
+```
+
+### Median effect
+As with analyzing the total effect, when assessing the median effect, only the
+most damaging storm classifications are of interest. Again, only the 5 storm
+types with the highest median in each category were selected for this analysis.
+
+```{r}
+median.effects <- all.effects %>%
+  # find median effect for each sorm type
+  dcast(EVTYPE ~ variable, median) %>%
+  ApplyCuts(head.size = 5)
+```
+
+## Results
+
+A helper function is defined to make plotting consistent.
+```{r draw_effect_plots}
+DrawEffectPlots <- function(df,
+                            xlab = 'Storm type',
+                            ylab = 'Effect',
+                            title = 'Effect') {
+  mf_labeller <- function(var, value){
+    value <- as.character(value)
+    if (var=="variable") { 
+      value[value=="FATALITIES"] <- "Fatalities"
+      value[value=="INJURIES"]   <- "Injuries"
+      value[value=="PROPDMG"] <- "Property damage"
+      value[value=="CROPDMG"]   <- "Crop damage"
+      }
+    return(value)
+    }
+
+  g <- df %>%
+    melt(id = c('EVTYPE')) %>%
+    filter(value > 0) %>%
+    ggplot(aes(EVTYPE, y = value))
+
+  g + geom_point(size = 3) +
+    facet_grid(variable~., scales = 'free', labeller = mf_labeller) +
+    theme(text = element_text(size = 16),
+          axis.text.x = element_text(angle = 65, hjust = 1)) +
+  labs(x = xlab,
+       y = ylab,
+       title = title) +
+  scale_y_log10()
+}
+```
+
+An additional helper fucntion is created to extract the storm type with the
+largest effect of a given type.
+```{r, extract_largest}
+ExtractLargestEffect <- function(df, column.to.rank) {
+  the.order <- order(df[, column.to.rank], decreasing = TRUE)
+  df[the.order[[1]],]
+}
+```
+
+### Total effect
+
+In order to determine the storm type that has had the largest total health and
+economic effect, one can make a plot of the total effect in the categories of
+interest. Namely, number of fatalities, number of injuries, property damage,
+and crop damage (both measured in billions of US dollars).
+
+```{r total_effect, fig.height=10}
+DrawEffectPlots(total.effects,
+                ylab = 'Total effect',
+                title = 'Total health and economic effect due to storms')
+```
+
+```{r}
+largest.total.fatalities <- ExtractLargestEffect(total.effects, 'FATALITIES')
+largest.total.injuries <- ExtractLargestEffect(total.effects, 'INJURIES')
+largest.total.propdmg <- ExtractLargestEffect(total.effects, 'PROPDMG')
+largest.total.cropdmg <- ExtractLargestEffect(total.effects, 'CROPDMG')
+```
+
+From this plot, it is possible to see that 
+`r as.character(largest.total.fatalities[[1, 'EVTYPE']])` is responsible for the
+largest number of fatalities with
+`r as.numeric(largest.total.fatalities[[1, 'FATALITIES']])`. 
+`r as.character(largest.total.injuries[[1, 'EVTYPE']])` is responsible for the
+largest number of injuries with
+`r as.numeric(largest.total.injuries[[1, 'INJURIES']])`. 
+`r as.character(largest.total.propdmg[[1, 'EVTYPE']])` has caused the most
+property damage with `r as.numeric(largest.total.propdmg[[1, 'PROPDMG']])`
+millions of dollars.
+Finally, `r as.character(largest.total.cropdmg[[1, 'EVTYPE']])`
+is responsible for the largest amount of crop damage with
+`r as.numeric(largest.total.cropdmg[[1, 'CROPDMG']])` millions of dollars.
+
+### Median effect
+
+The total effect is of course important, however the median effect can be used
+to estimate the effect of a typical storm of each category.
+
+```{r average_effect, fig.height=10}
+DrawEffectPlots(median.effects,
+                ylab = 'Median effect per storm',
+                title = 'Median health and economic effect per storm')
+```
+
+```{r}
+largest.median.fatalities <- ExtractLargestEffect(median.effects, 'FATALITIES')
+largest.median.injuries <- ExtractLargestEffect(median.effects, 'INJURIES')
+largest.median.propdmg <- ExtractLargestEffect(median.effects, 'PROPDMG')
+largest.median.cropdmg <- ExtractLargestEffect(median.effects, 'CROPDMG')
+```
+
+From this plot, it is possible to see that 
+`r as.character(largest.median.fatalities[[1, 'EVTYPE']])` has the highest
+median number of fatalities with
+`r as.numeric(largest.median.fatalities[[1, 'FATALITIES']])`. 
+`r as.character(largest.median.injuries[[1, 'EVTYPE']])` has the highest median
+number of injuries with
+`r as.numeric(largest.median.injuries[[1, 'INJURIES']])`. 
+`r as.character(largest.median.propdmg[[1, 'EVTYPE']])` cause the highest median
+property damage with `r 1000*as.numeric(largest.median.propdmg[[1, 'PROPDMG']])`
+thousands of dollars.
+Finally, `r as.character(largest.median.cropdmg[[1, 'EVTYPE']])`
+has the largest median amount of crop damage with
+`r as.numeric(largest.median.cropdmg[[1, 'CROPDMG']])` millions of dollars.
+
