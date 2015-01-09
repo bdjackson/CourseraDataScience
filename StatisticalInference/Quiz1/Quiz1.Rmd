@@ -1,0 +1,85 @@
+# Quiz 1
+
+## Question 1
+In this example, we want to know the probability of the mother having a disease
+given the following known probabilities:
+```{r}
+p.either <- 0.17
+p.both <- 0.06
+p.father <- 0.12
+```
+
+We know the following
+
+```
+p.either = p.father + p.mother - p.both
+```
+
+We can rearange that equation to get 
+
+```{r}
+p.mother <- p.either + p.both - p.father
+print(p.mother)
+```
+
+## Question 2
+Suppose we have a uniform distribution between 0 and 1. What is the 75th
+percentile?
+
+```{r}
+qunif(0.75, 0, 1)
+```
+
+## Question 3
+You and a friend are playing a game where you flip a coin. Every time the coin
+lands on heads, she gives you `X`. Every time the coin lands on tails, she gives
+you `Y`. The probability of the coin landing on heads is `p`. What is the
+relation between `X` and `Y` to mak the game fair (expected earnings = 0).
+```
+expected.earnings = p*X - (1-p)*Y = 0
+```
+
+Rearranging this, we get
+```
+p/(1-p) = Y/X
+```
+
+## Question 4
+A distribution which is symmetric about zero must have a median of zero.
+
+## Question 5
+Consider the following PMF:
+```{r}
+x <- 1:4
+p <- x/sum(x)
+temp <- rbind(x, p)
+rownames(temp) <- c("X", "Prob")
+temp
+```
+What is its mean?
+```{r}
+sum(temp['X',]*temp['Prob',])
+```
+
+## Question 6
+Suppose a pregnancy test has a sensitivity of 0.75 and specificity of 0.54.
+Of the women in the study 30% are pregnant. Our subject received a positive
+result on the test, what is her probability of being pregnant?
+
+```{r}
+sensitivity <- 0.75
+specificity <- 0.52
+prior <- 0.3
+```
+
+We can use Bayes theorem to solve this:
+```
+p(preg|+) = p(+|preg)*p(preg)/p(+)
+p(preg|+) = p(+|preg)*p(preg)/(p(+|pregnant)*p(pregnant) + p(+|not pregnant)*p(not pregnant))
+p(preg|+) = p(+|preg)*p(preg)/(p(+|pregnant)*p(pregnant) + (1-p(-|not pregnant))*(1-p(pregnant)))
+p(preg|+) = sensitivity*prior/(sensitivity*prior + (1-specificity)*(1-prior))
+```
+
+```{r}
+sensitivity*prior/(sensitivity*prior + (1-specificity)*(1-prior))
+```
