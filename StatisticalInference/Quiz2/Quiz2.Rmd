@@ -4,6 +4,7 @@
 The variance of a distribution of the average of an IID draw of `n` observations
 from a population with mean `\mu` and variance `\sigma^2` is `\sigma^2/n`
 
+
 ## Question 2
 Suppose the diastolic blood pressures (DBPs) for men aged 35-44 are normally
 distributed with a mean of 80 (mm Hg) and a standard deviation of 10. What is
@@ -14,6 +15,7 @@ This can be determined using the `pnorm` function in R.
 ```{r}
 pnorm(70, mean=80, sd=10, lower.tail=TRUE)
 ```
+
 
 ## Question 3
 Suppose Brain volume for adult women is normally distributed with a mean of
@@ -27,6 +29,7 @@ population.mean <- 1100
 population.sd <- 75
 qnorm(0.95, mean=population.mean, sd=population.sd, lower.tail=TRUE)
 ```
+
 
 ## Question 4
 Consider the sample mean of 100 random adult women from this population.
@@ -71,6 +74,7 @@ of the sample mean is
 qnorm(0.95, mean=sample.mean, sd=sample.sd, lower.tail=TRUE)
 ```
 
+
 ## Question 5
 What is the probability of obtaining four or five heads in five coin flips?
 
@@ -89,6 +93,84 @@ specific population has a mean of 15 (sleep events per hour) and a standard
 deviation of 10. They are not normally distributed. Give your best estimate of
 the probability that a sample mean RDI of 100 people is between 14 and 16 events
 per hour?
+
+```{r}
+population.mean <- 15
+population.sd <- 10
+num.samples <- 100
+
+test.min <- 14
+test.max <- 16
+```
+
+For this example, we will take advantae of the central limit theorem.
+This states that for any distribution, a the distribution of the sample mean 
+will approach that of a Gaussian given large enough sample sizes.
+
+We can determine the expected mean and standard deviation of the sample
+mean given a sample size of `r num.samples`.
+
+```{r}
+exp.sample.mean <- population.mean
+exp.sample.sd <- population.sd/sqrt(num.samples)
+```
+
+The expected sample mean is `r exp.sample.mean` and the expected sample standard
+deviation is `r exp.sample.sd`.
+
+Finally, we would like to determine the probability that the sample mean RDI is
+within the interval `r test.min` to `r test.max`.
+
+```{r}
+interval <- (pnorm(test.max,
+                   mean=exp.sample.mean,
+                   sd=exp.sample.sd,
+                   lower.tail=TRUE) -
+             pnorm(test.min,
+                   mean=exp.sample.mean,
+                   sd=exp.sample.sd,
+                   lower.tail=TRUE))
+```
+
+The expected probility that the sample mean RDI is in this interval is
+`r interval`.
+
+### Test results
+We can test this using a a uniform distribution.
+The variance of a uniform distribution is given by `(max-min)^2/12`. From this
+equation, we can determine the minimum and maximum values of a uniforom
+distribution which give the desired mean and standard deviation.
+
+```{r}
+population.delta <- sqrt(3)*population.sd
+population.min <- population.mean - population.delta
+population.max <- population.mean + population.delta
+```
+
+We can test that this reproduces the population mean and standard deviation we
+expect
+
+```{r}
+print(mean(runif(1000, min=population.min, max=population.max)))
+print(sd(runif(1000, min=population.min, max=population.max)))
+```
+
+We will generate 1000 simulations, each with `r num.samples` samples.
+```{r}
+num.simulations <- 1000
+simulation.means <- apply(matrix(runif(num.simulations*num.samples,
+                                 min=population.min,
+                                 max=population.max),
+                                 nrow=num.simulations),
+                          MARGIN=1,
+                          FUN=mean)
+sd.of.sample.means <- sd(simulation.means)
+hist(simulation.means)
+```
+
+Indeed the distribution of sample means looks fairly Gaussian.
+The standard deviation of the samples means is `r sd.of.sample.means`, which
+agrees with the expected standard deviation of `r exp.sample.sd`.
 
 
 ## Question 7
@@ -116,6 +198,7 @@ mean(apply(matrix(runif(num.simulations*n.samples, min=0, max=1),
                   nrow=num.simulations),
            1, mean))
 ```
+
 
 ## Question 8
 The number of people showing up at a bus stop is assumed to be Poisson with a
