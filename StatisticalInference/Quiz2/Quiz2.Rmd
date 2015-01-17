@@ -1,0 +1,143 @@
+# Quiz 2
+
+## Question 1
+The variance of a distribution of the average of an IID draw of `n` observations
+from a population with mean `\mu` and variance `\sigma^2` is `\sigma^2/n`
+
+## Question 2
+Suppose the diastolic blood pressures (DBPs) for men aged 35-44 are normally
+distributed with a mean of 80 (mm Hg) and a standard deviation of 10. What is
+the probability that a random 35-44 year old has a DBP less than 70?
+
+This can be determined using the `pnorm` function in R.
+
+```{r}
+pnorm(70, mean=80, sd=10, lower.tail=TRUE)
+```
+
+## Question 3
+Suppose Brain volume for adult women is normally distributed with a mean of
+about 1,100 cc for women with a standard deviation of 75 cc. What brain volume
+represents the 95th percentile?
+
+This can be determined using the `qnorm` function in R.
+
+```{r}
+population.mean <- 1100
+population.sd <- 75
+qnorm(0.95, mean=population.mean, sd=population.sd, lower.tail=TRUE)
+```
+
+## Question 4
+Consider the sample mean of 100 random adult women from this population.
+What is the 95th percentile of the distribution of that sample mean?
+
+```{r}
+n.samples <- 100
+```
+
+The expected mean obtained from sampling from a normally distributed population
+is the same as the mean of the population.
+So, the expected sample mean is `r population.mean` cc.
+
+```{r}
+sample.mean <- population.mean
+```
+
+The expected standard deviation of the sample mean give a sample size of
+`n.samples` is `population.sd/sqrt(n.sample)`.
+Therefore, the expected standard deviation on the sample mean is
+
+```{r}
+sample.sd <- population.sd/sqrt(n.samples)
+sample.sd
+```
+
+We can test this by running toy simulations.
+
+```{r}
+num.simulations <- 1000
+sd(apply(matrix(rnorm(num.simulations*n.samples,
+                      mean=population.mean,
+                      sd=population.sd),
+                num.simulations),
+         1, mean))
+```
+
+Using these pieces of information, we can determine that the 95th percentile
+of the sample mean is
+
+```{r}
+qnorm(0.95, mean=sample.mean, sd=sample.sd, lower.tail=TRUE)
+```
+
+## Question 5
+What is the probability of obtaining four or five heads in five coin flips?
+
+```{r}
+dbinom(4, size=5, prob=0.5) + dbinom(5, size=5, prob=0.5)
+```
+
+We can also use the `pbinom` function to solve this:
+
+```{r}
+pbinom(3, size=5, prob=0.5, lower.tail=FALSE)
+```
+## Question 6
+The respiratory disturbance index (RDI), a measure of sleep disturbance, for a
+specific population has a mean of 15 (sleep events per hour) and a standard
+deviation of 10. They are not normally distributed. Give your best estimate of
+the probability that a sample mean RDI of 100 people is between 14 and 16 events
+per hour?
+
+
+## Question 7
+Consider a standard uniform density. The mean for this density is .5 and the
+variance is 1 / 12. You sample 1,000 observations from this distribution and
+take the sample mean, what value would you expect it to be near?
+
+The sample mean is expected to be near 0.5.
+
+We can show this by running toy simulations:
+
+```{r}
+print(mean(runif(1000, min=0, max=1)))
+print(mean(runif(1000, min=0, max=1)))
+print(mean(runif(1000, min=0, max=1)))
+```
+
+Indeed, the three test simulations were near the expected value of 0.5, however,
+we can be a bit more rigorous.
+
+```{r}
+num.simulations <- 100
+n.samples <- 1000
+mean(apply(matrix(runif(num.simulations*n.samples, min=0, max=1),
+                  nrow=num.simulations),
+           1, mean))
+```
+
+## Question 8
+The number of people showing up at a bus stop is assumed to be Poisson with a
+mean of 5 people per hour. You watch the bus stop for 3 hours. About what's the
+probability of viewing 10 or fewer people?
+
+```{r}
+hourly.exp <- 5
+num.hours <- 3
+total.exp <- hourly.exp*num.hours
+```
+
+The expected number of people to view in `r num.hours` is `r total.exp`.
+This can be modeled as a Poisson.
+
+```{r}
+ppois(10, lambda=total.exp)
+```
+
+We can test this explicitly by taking the sum of all the densities less than or
+equal to 10
+
+```{r}
+sum(dpois(0:10, lambda=total.exp))
+```
