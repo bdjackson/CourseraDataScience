@@ -1,7 +1,10 @@
 ---
 title: "Exploration of the Expoential Distribution"
 author: 'Brett Jackson'
-output: pdf_document
+# output: pdf_document
+output: 
+  html_document:
+    keep_md: true
 ---
 ```{r, echo=FALSE}                                                               
 # Set the output options for large and small numbers                             
