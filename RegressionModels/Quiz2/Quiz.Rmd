@@ -135,7 +135,7 @@ meters what would happen to the slope coefficient?
 
 Answer:
 
-It is multipllied by 1000
+It is multipllied by 100
 
 
 ## Question 8
