@@ -1,0 +1,26 @@
+---
+title: "Effect of various attributes on miles per gallon"
+author: 'Brett Jackson'
+# output: pdf_document
+output: 
+  html_document:
+    keep_md: true
+---
+```{r, echo=FALSE}                                                               
+# Set the output options for large and small numbers                             
+options(scipen = 5, digits = 2)
+```                                                                              
+
+## Overview
+#### TODO Write stuff here
+
+
+## Method
+#### TODO write about the method
+
+
+## Interpretation
+#### TODO Write about interpretation of data
+```{r}
+library(ggplot2)
+```
