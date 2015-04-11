@@ -1,14 +1,10 @@
----
-title: "Quiz 2"
-output:
-  html_document:
-    keep_md: true
----
+# Quiz 2
 
 ## Question 1
 Consider the following data with x as the predictor and y as as the outcome.
 
-```{r}
+
+```r
 x <- c(0.61, 0.93, 0.83, 0.35, 0.54, 0.16, 0.91, 0.62, 0.62)
 y <- c(0.67, 0.84, 0.6, 0.18, 0.85, 0.47, 1.1, 0.65, 0.36)
 ```
@@ -19,26 +15,48 @@ regression model is 0 or not.
 Answer:
 
 First, perform the linear regression
-```{r}
+
+```r
 fit=lm(y~x)
 ```
 The fitted coeficients are
-```{r}
+
+```r
 fit
+```
+
+```
+## 
+## Call:
+## lm(formula = y ~ x)
+## 
+## Coefficients:
+## (Intercept)            x  
+##      0.1885       0.7224
+```
+
+```r
 beta.0 <- coef(fit)[1]
 beta.1 <- coef(fit)[2]
 ```
 
 Now, compute the variance on $\beta_1$. To do this, we use the errors on $y_i$
-```{r}
+
+```r
 err <- y-predict(fit)
 var.beta.1 <- sum(err^2)/(NROW(x)-2)/sum((x-mean(x))^2)
 ```
 
 Finally, compute the t statistic, and use it to compute the p value
-```{r}
+
+```r
 t.beta.1 <- beta.1/sqrt(var.beta.1)
 2*pt(t.beta.1, NROW(x)-2, lower.tail=FALSE)
+```
+
+```
+##          x 
+## 0.05296439
 ```
 
 ## Question 2
@@ -46,8 +64,13 @@ Consider the previous problem, give the estimate of the residual standard
 deviation.
 
 Answer:
-```{r}
+
+```r
 sqrt(1/(NROW(x)-2)*sum(err^2))
+```
+
+```
+## [1] 0.2229981
 ```
 
 ## Question 3
@@ -56,19 +79,22 @@ mpg (outcome). Get a 95% confidence interval for the expected mpg at the average
 weight. What is the lower endpoint?
 
 Answer:
-```{r}
+
+```r
 library(datasets)
 fit <- lm(mtcars$mpg~mtcars$wt)
 ```
 
 Extract the slope and intercept from the fit
-```{r}
+
+```r
 beta.0 <- coef(fit)[1]
 beta.1 <- coef(fit)[2]
 ```
 
 Calculate a few other useful things
-```{r}
+
+```r
 mean.weight <- mean(mtcars$wt)
 err <- mtcars$mpg-predict(fit)
 var <- sum(err^2)/(nrow(mtcars)-2)
@@ -81,7 +107,8 @@ var.beta.1 <- var/sum((mtcars$wt-mean(mean.weight))^2)
 
 These functions are used to calculate the the variance on the line, and variance
 on the prediction at a given point
-```{r}
+
+```r
 var.line <- function(x0) {
   (beta.0 +
    beta.1*x0 +
@@ -98,6 +125,10 @@ var.prediction <- function(x0) {
 }
 
 var.line(mean.weight)
+```
+
+```
+## [1] 18.99098 21.19027
 ```
 
 
@@ -118,8 +149,13 @@ Construct a 95% prediction interval for its mpg. What is the upper endpoint?
 Answer:
 
 Using the function from before
-```{r}
+
+```r
 var.prediction(3)
+```
+
+```
+## [1] 14.92987 27.57355
 ```
 
 ## Question 6
@@ -129,9 +165,14 @@ Construct a 95% confidence interval for the expected change in mpg per 1 short
 ton increase in weight. Give the lower endpoint.
 
 Answer:
-```{r}
+
+```r
 conf.int.beta.1 <- beta.1 + c(-1,1)*qt(0.975, df=fit$df)*sqrt(var.beta.1)
 2*conf.int.beta.1
+```
+
+```
+## [1] -12.97262  -8.40527
 ```
 
 ## Question 7
@@ -176,7 +217,8 @@ the predictor. About what is the ratio of the the sum of the squared errors,
 the model with the intercept and slope (numerator)?
 
 Answer:
-```{r}
+
+```r
 fit <- lm(mtcars$mpg~mtcars$wt)
 mean.mpg <- mean(mtcars$mpg)
 
@@ -184,6 +226,10 @@ sq.err.full.fit <- sum(fit$residuals^2)
 sq.err.mean <- sum((mtcars$mpg - mean(mtcars$mpg))^2)
 
 sq.err.full.fit/sq.err.mean
+```
+
+```
+## [1] 0.2471672
 ```
 
 
