@@ -1,39 +1,43 @@
----
-title: "Quiz 1"
-output: 
-  html_document:
-    keep_md: true
----
+# Quiz 1
 
-```{r}
+
+```r
 library(datasets)
 ```
 
 ## Question 1
 Consider the data set given below
 
-```{r}
+
+```r
 x <- c(0.18, -1.54, 0.42, 0.95)
 ```
 
 And weights given by
 
-```{r}
+
+```r
 w <- c(2, 1, 3, 1)
 ```
 
 Give the value of μ that minimizes the least squares equation.
 
 Answer:
-```{r}
+
+```r
 sum(w*x)/sum(w)
+```
+
+```
+## [1] 0.1471429
 ```
 
 
 ## Question 2
 Consider the following data set
 
-```{r}
+
+```r
 x <- c(0.8, 0.47, 0.51, 0.73, 0.36, 0.58, 0.57, 0.85, 0.44, 0.42)
 y <- c(1.39, 0.72, 1.55, 0.48, 1.19, -1.59, 1.23, -0.65, 1.49, 0.05)
 ```
@@ -42,25 +46,53 @@ outcome and x as the regressor. (Hint, do not center the data since we want
 regression through the origin, not through the means of the data.)
 
 Answer:
-```{r}
+
+```r
 sum(x*y)/sum(x*x)
 ```
 
+```
+## [1] 0.8262517
+```
+
 We can test this using the linear model function in R
-```{r}
+
+```r
 lm(y~x+0)
+```
+
+```
+## 
+## Call:
+## lm(formula = y ~ x + 0)
+## 
+## Coefficients:
+##      x  
+## 0.8263
 ```
 
 ## Question 3
 Do data(mtcars) from the datasets package and fit the regression model with mpg as the outcome and weight as the predictor. Give the slope coefficient.
 
 Answer:
-```{r}
+
+```r
 data(mtcars)
 ```
 
-```{r}
+
+```r
 lm(mtcars$mpg ~ mtcars$wt)
+```
+
+```
+## 
+## Call:
+## lm(formula = mtcars$mpg ~ mtcars$wt)
+## 
+## Coefficients:
+## (Intercept)    mtcars$wt  
+##      37.285       -5.344
 ```
 
 
@@ -157,7 +189,8 @@ $$
 
 This means that $\gamma = cor(x_1,x_2)$
 
-```{r}
+
+```r
 cor <- 0.4
 x1 <- 1.5
 gamma <- cor
@@ -165,11 +198,16 @@ x2 <- gamma*x1
 x2
 ```
 
+```
+## [1] 0.6
+```
+
 
 ## Question 6
 Consider the data given by the following
 
-```{r}
+
+```r
 x <- c(8.58, 10.46, 9.01, 9.64, 8.86)
 ```
 
@@ -177,21 +215,38 @@ What is the value of the first measurement if x were normalized (to have mean 0
 and variance 1)?
 
 Answer:
-```{r}
+
+```r
 (x[1]-mean(x))/sd(x)
+```
+
+```
+## [1] -0.9718658
 ```
 
 ## Question 7
 Consider the following data set (used above as well). What is the intercept for fitting the model with x as the predictor and y as the outcome?
 
-```{r}
+
+```r
 x <- c(0.8, 0.47, 0.51, 0.73, 0.36, 0.58, 0.57, 0.85, 0.44, 0.42)
 y <- c(1.39, 0.72, 1.55, 0.48, 1.19, -1.59, 1.23, -0.65, 1.49, 0.05)
 ```
 
 Answer:
-```{r}
+
+```r
 lm(y~x)
+```
+
+```
+## 
+## Call:
+## lm(formula = y ~ x)
+## 
+## Coefficients:
+## (Intercept)            x  
+##       1.567       -1.713
 ```
 
 ## Question 8
@@ -203,7 +258,8 @@ The intercept will be exactly zero.
 ## Question 9
 Consider the data given by
 
-```{r}
+
+```r
 x <- c(0.8, 0.47, 0.51, 0.73, 0.36, 0.58, 0.57, 0.85, 0.44, 0.42)
 ```
 What value minimizes the sum of the squared distances between these points and
@@ -212,8 +268,13 @@ itself?
 Answer:
 The mean of the values minimizes the squared distance between the points and
 itself
-```{r}
+
+```r
 mean(x)
+```
+
+```
+## [1] 0.573
 ```
 
 
