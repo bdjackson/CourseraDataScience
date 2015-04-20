@@ -1,52 +1,165 @@
+```{r}
+library(dplyr)
+```
+
 # Quiz 1
 
 ## Question 1
 
-Answer:
+Consider the `mtcars` data set. Fit a model with mpg as the outcome that
+includes number of cylinders as a factor variable and weight as confounder.
+Give the adjusted estimate for the expected change in mpg comparing 8 cylinders
+to 4.
+
+### Answer:
+```{r}
+grouped.cars <- mtcars %>% group_by(as.factor(cyl))
+```
+
+```{r}
+fit.result <- with(grouped.cars, lm(mpg ~ wt+as.factor(cyl)))
+fit.result
+fit.result$coefficients['as.factor(cyl)8']
+```
 
 
 ## Question 2
 
-Answer:
+Consider the mtcars data set. Fit a model with mpg as the outcome that includes
+number of cylinders as a factor variable and weight as a possible confounding
+variable.
+Compare the effect of 8 versus 4 cylinders on mpg for the adjusted and
+unadjusted by weight models. Here, adjusted means including the weight variable
+as a term in the regression model and unadjusted means the model without weight
+included.
+What can be said about the effect comparing 8 and 4 cylinders after looking at
+models with and without weight included?.
 
+### Answer:
+
+First, look at the regression where the weight is considered as a confounding
+factor. This is the same as question 1.
+```{r}
+fit.result <- with(grouped.cars, lm(mpg ~ wt+as.factor(cyl)))
+fit.result
+fit.result$coefficients['as.factor(cyl)8']
+```
+
+Now, compare this with the scenario where weight isn't considered.
+```{r}
+fit.result <- with(grouped.cars, lm(mpg ~ as.factor(cyl)))
+fit.result
+fit.result$coefficients['as.factor(cyl)8']
+```
+
+When the weight is considered as a confounding factor, the effect of the
+number of cylinders appears to decrease.
 
 ## Question 3
 
-Answer:
+Consider the mtcars data set. Fit a model with mpg as the outcome that considers
+number of cylinders as a factor variable and weight as confounder.
+Now fit a second model with mpg as the outcome model that considers the
+interaction between number of cylinders (as a factor variable) and weight.
+Give the P-value for the likelihood ratio test comparing the two models and
+suggest a model using 0.05 as a type I error rate significance benchmark.
 
+### Answer:
+
+First, look at the regression where the weight is considered as a confounding
+factor. This is the same as question 1.
+```{r}
+fit.result.no.interaction <- with(grouped.cars, lm(mpg ~ wt+as.factor(cyl)))
+summary(fit.result.no.interaction)
+```
+
+```{r}
+fit.result.with.interaction <- with(grouped.cars, lm(mpg ~ wt+as.factor(cyl)+wt*as.factor(cyl)))
+summary(fit.result.with.interaction)
+```
+
+```{r}
+likelihood.ratio.test <- anova(fit.result.no.interaction,
+                               fit.result.with.interaction)
+likelihood.ratio.test
+```
+
+The interaction term between the 8 cylinder subset and the weight is
+`r likelihood.ratio.test['Pr(>F)'][2,]`.
+The difference is not significant, so we fail to reject the model with no
+interaction term.
 
 ## Question 4
 
-Answer:
+Consider the `mtcars` data set. Fit a model with mpg as the outcome that
+includes number of cylinders as a factor variable and weight inlcuded in the
+model as
+```
+lm(mpg ~ I(wt * 0.5) + factor(cyl), data = mtcars)
+```
+How is the wt coefficient interpretted?
+
+
+### Answer:
+
+```{r}
+lm(mpg ~ I(wt * 0.5) + factor(cyl), data = mtcars)
+```
+
+Since the `wt` column is given in units of 1000 lbs, the above linear model
+gives "The estimated expected change in MPG per one ton increase in weight for
+a specific number of cylinders (4, 6, 8)."
+
+I'm not sure I completely buy this because the same slope is used for all number
+of cylinders.
 
 
 ## Question 5
 
-Answer:
+Consider the following data set
 
+```{r}
+x <- c(0.586, 0.166, -0.042, -0.614, 11.72)
+y <- c(0.549, -0.026, -0.127, -0.751, 1.344)
+```
+
+Give the hat diagonal for the most influential point
+
+### Answer:
+
+```{r}
+fit <- lm(y~x)
+plot(y~x)
+abline(fit)
+```
+
+```{r}
+hatvalues(fit)
+```
 
 ## Question 6
 
-Answer:
+Consider the following data set
 
+```{r}
+x <- c(0.586, 0.166, -0.042, -0.614, 11.72)
+y <- c(0.549, -0.026, -0.127, -0.751, 1.344)
+```
+
+Give the slope dfbeta for the point with the highest hat value.
+
+### Answer:
+
+```{r}
+dfbetas(fit)
+```
 
 ## Question 7
 
-Answer:
+Consider a regression relationship between Y and X with and without adjustment
+for a third variable Z. Which of the following is true about comparing the
+regression coefficient between Y and X with and without adjustment for Z.
 
+### Answer:
 
-## Question 8
-
-Answer:
-
-
-## Question 9
-
-Answer:
-
-
-## Question 10
-
-Answer:
-
-
+For the the coefficient to change sign, there must be a significant interaction term.

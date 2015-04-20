@@ -8,19 +8,59 @@ output:
 ---
 ```{r, echo=FALSE}                                                               
 # Set the output options for large and small numbers                             
-options(scipen = 5, digits = 2)
-```                                                                              
+options(scipen = -2, digits = 2)
+```                            
+
+```{r, load_libraries, echo=FALSE, message=FALSE, warning=FALSE}
+library(dplyr)
+```
 
 ## Overview
-#### TODO Write stuff here
+The goal of this study is to use the `mtcars` data set to investigate any
+potential relationships associated with the fuel efficiency.
+In particular, is there any significant difference in fuel efficiency
+associated with the type of transmission (manual or automatic)?
 
+#### TODO Write stuff here
 
 ## Method
 #### TODO write about the method
+
+```{r, simple_summary, echo=FALSE}
+cars <- mtcars %>% mutate(Transmission=as.factor(am)) %>% group_by(Transmission)
+levels(cars$Transmission)[1] = 'Automatic'
+levels(cars$Transmission)[2] = 'Manual'
+simple.summary <- summarize(cars, mean(mpg))
+```
+
+```{r, simple_test, echo=FALSE}
+simple.test <- t.test(cars[cars$Transmission=='Manual',]$mpg,
+                      cars[cars$Transmission=='Automatic',]$mpg,
+                      alternative='greater')
+```
+Looking at the data in the `mtcars` dataset, the cars with manual transmissions
+appear to have higher fuel efficiency with
+`r simple.summary[simple.summary$Transmission==0, 'mean(mpg)'][[1]]` mpg
+compared with
+`r simple.summary[simple.summary$Transmission==1, 'mean(mpg)'][[1]]` mpg for
+the cars with automatic transmissions.
+Performing a T-test, ignoring any possible confounding relations, the higher
+fuel efficiency observed in the cars with manual transmissions is shown to be
+significant, with a p-value $< 0.05$, using an alternative hypothesis that
+the cars with an manual transmission have higher fuel efficiency.
+It is, however, possible that there are confounding factors which can explain
+some of this increased fuel efficiency.
+
+manual transmission are shown to have a 
 
 
 ## Interpretation
 #### TODO Write about interpretation of data
 ```{r}
 library(ggplot2)
+```
+
+## Appendix
+
+```{r ref.label=knitr::all_labels(), eval=FALSE}
 ```
