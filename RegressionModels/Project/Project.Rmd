@@ -3,8 +3,7 @@ title: "Effect of various attributes on miles per gallon"
 author: 'Brett Jackson'
 # output: pdf_document
 output: 
-  html_document:
-    keep_md: true
+  pdf_document
 ---
 ```{r, echo=FALSE}                                                               
 # Set the output options for large and small numbers                             
@@ -13,6 +12,8 @@ options(scipen = -2, digits = 2)
 
 ```{r, load_libraries, echo=FALSE, message=FALSE, warning=FALSE}
 library(dplyr)
+library(ggplot2)
+library(GGally)
 ```
 
 ## Overview
@@ -27,22 +28,25 @@ associated with the type of transmission (manual or automatic)?
 #### TODO write about the method
 
 ```{r, simple_summary, echo=FALSE}
-cars <- mtcars %>% mutate(Transmission=as.factor(am)) %>% group_by(Transmission)
-levels(cars$Transmission)[1] = 'Automatic'
-levels(cars$Transmission)[2] = 'Manual'
+cars <- mtcars %>%
+        mutate(Trans=as.factor(am)) %>%
+        group_by(Trans) %>%
+        select(-am, -qsec, -carb, -gear, -drat, -vs)
+levels(cars$Trans)[1] = 'Auto'
+levels(cars$Trans)[2] = 'Manual'
 simple.summary <- summarize(cars, mean(mpg))
 ```
 
 ```{r, simple_test, echo=FALSE}
-simple.test <- t.test(cars[cars$Transmission=='Manual',]$mpg,
-                      cars[cars$Transmission=='Automatic',]$mpg,
+simple.test <- t.test(cars[cars$Trans=='Manual',]$mpg,
+                      cars[cars$Trans=='Auto',]$mpg,
                       alternative='greater')
 ```
 Looking at the data in the `mtcars` dataset, the cars with manual transmissions
 appear to have higher fuel efficiency with
-`r simple.summary[simple.summary$Transmission==0, 'mean(mpg)'][[1]]` mpg
+`r simple.summary[simple.summary$Trans==0, 'mean(mpg)'][[1]]` mpg
 compared with
-`r simple.summary[simple.summary$Transmission==1, 'mean(mpg)'][[1]]` mpg for
+`r simple.summary[simple.summary$Trans==1, 'mean(mpg)'][[1]]` mpg for
 the cars with automatic transmissions.
 Performing a T-test, ignoring any possible confounding relations, the higher
 fuel efficiency observed in the cars with manual transmissions is shown to be
@@ -51,8 +55,80 @@ the cars with an manual transmission have higher fuel efficiency.
 It is, however, possible that there are confounding factors which can explain
 some of this increased fuel efficiency.
 
-manual transmission are shown to have a 
+```{r, explratory_plots, echo=FALSE, warning=FALSE, message=FALSE}
+# plot(cars, col=cars$Trans, pch=16, size=0.5)
+# pairs.plot <- ggpairs(cars[,c('mpg', 'wt', 'cyl', 'Trans')], color='Trans', alpha=0.4)
+#pairs.plot <- ggpairs(cars, color='Trans', alpha=0.4)
+#pairs.plot
+```
 
+```{r, exploratory_plots, echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=10}
+cars.sub <- cars[,c('mpg', 'wt', 'cyl', 'Trans')]
+cars.sub <- cars
+pairs.plot <- ggpairs(cars.sub,
+                      color='Trans',
+                      alpha=0.4,
+                      upper = list(params = c(corrSize=1)))
+
+corr.font.size <- 3
+cars.labels <- labels(cars.sub)[[2]]
+for (itx in seq_along(cars.labels)) {
+  for (ity in seq_along(cars.labels)) {
+    if (itx <= ity) {
+      next
+    }
+    x.label <- cars.labels[itx]
+    y.label <- cars.labels[ity]
+    if (x.label == 'Trans' || y.label == 'Trans') {
+      next
+    }
+    tmp.aes <- aes_string(x=x.label, y=y.label, color='Trans')
+    corr.plot <- ggally_cor(cars.sub, tmp.aes, size=corr.font.size)
+
+    pairs.plot <- putPlot(pairs.plot, corr.plot, ity, itx)
+  }
+}
+
+# itx <- 2
+# ity <- 1
+# x.label <- cars.labels[itx]
+# y.label <- cars.labels[ity]
+# tmp.aes <- aes(x='cyl', y='mpg', color='Trans')
+# corr.plot <- ggally_cor(cars.sub, tmp.aes, size=20)
+# 
+# pairs.plot <- putPlot(pairs.plot, corPlot, 1, )
+
+pairs.plot +
+  theme(text = element_text(size=12),
+        axis.text.x = element_text(angle=0, size=10),
+        axis.text.y = element_text(angle=0, size=10)) 
+```
+
+```{r, fit.vs.weight, echo=FALSE} 
+fit.result.no.interaction <- with(cars, lm(mpg ~ wt + as.factor(Trans)))
+fit.result.with.interaction <- with(cars, lm(mpg ~ wt + as.factor(Trans) + wt*as.factor(Trans)))
+```
+
+```{r}
+with(cars, plot(mpg~wt, col=Trans))
+abline(c(fit.result.no.interaction$coefficients[1],
+         fit.result.no.interaction$coefficients[2]),
+       col='black', lwd=2)
+abline(c(fit.result.no.interaction$coefficients[1], fit.result.no.interaction$coefficients[2]), col='red')
+abline(c(fit.result.no.interaction$coefficients[1] +
+           fit.result.no.interaction$coefficients[3],
+         fit.result.no.interaction$coefficients[2]),
+       col='red', lwd=2)
+
+abline(c(fit.result.with.interaction$coefficients[1],
+         fit.result.with.interaction$coefficients[2]),
+       col='black', lty=2, lwd=2)
+abline(c(fit.result.with.interaction$coefficients[1] +
+           fit.result.with.interaction$coefficients[3],
+         fit.result.with.interaction$coefficients[2] +
+           fit.result.with.interaction$coefficients[4]),
+       col='red', lty=2, lwd=2)
+```
 
 ## Interpretation
 #### TODO Write about interpretation of data
