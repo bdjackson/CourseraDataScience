@@ -7,7 +7,7 @@ output:
 ---
 ```{r, echo=FALSE}                                                               
 # Set the output options for large and small numbers                             
-options(scipen = -2, digits = 2)
+options(scipen = 5, digits = 2)
 ```                            
 
 ```{r, load_libraries, echo=FALSE, message=FALSE, warning=FALSE}
@@ -16,53 +16,112 @@ library(ggplot2)
 library(GGally)
 ```
 
-## Overview
+```{r, import.dataset, echo=FALSE}
+cars <- mtcars %>%
+        mutate(Trans=as.factor(am), cyl=as.factor(cyl), vs=as.factor(vs),
+               gear=as.factor(gear)) %>%
+        group_by(Trans) %>%
+        select(-am, -qsec, -carb, -gear, -drat, -vs)
+levels(cars$Trans)[1] = 'Auto'
+levels(cars$Trans)[2] = 'Manual'
+```
+
+```{r, simple.summary, echo=FALSE}
+simple.summary <- summarize(cars, mean(mpg))
+```
+
+```{r, simple.test, echo=FALSE}
+simple.test <- t.test(cars[cars$Trans=='Manual',]$mpg,
+                      cars[cars$Trans=='Auto',]$mpg,
+                      alternative='greater')
+```
+
+```{r, define.basic.fit, echo=FALSE}
+fit <- lm(mpg ~ as.factor(Trans), data=cars)
+```
+
+```{r, define.final.fit, echo=FALSE}
+final.fit.result <- update(fit, mpg ~ as.factor(Trans) + wt + cyl + wt*as.factor(Trans))
+```
+
+## Executive summary
 The goal of this study is to use the `mtcars` data set to investigate any
 potential relationships associated with the fuel efficiency.
 In particular, is there any significant difference in fuel efficiency
 associated with the type of transmission (manual or automatic)?
 
-#### TODO Write stuff here
+By performing a linear regression analysis to build a descriptive model of the
+`mtcars` dataset, accounting for the correlations between the car attributes,
+it is shown that among the cars in the dataset, the cars with a manual
+tranmsission do in fact have better fuel efficiency than those with an automatic
+transmission, with a difference of
+`r final.fit.result$coefficients[['as.factor(Trans)Manual']]` $\pm$
+`r summary(final.fit.result)$coefficients['as.factor(Trans)Manual','Std. Error']`
+miles per gallon.
+The model includes the type of transmission, the car weight, and the number of
+cylinders in the car engine. Other attributes are shown to provide little
+additional descriptive power.
 
-## Method
-#### TODO write about the method
+## Development of the model
+The desriptive model is a linear regression of the various attributes of the
+cars in the `mtcars` dataset.
+Several variables are removed from the model as they have little correlation
+with the fuel efficiency.
 
-```{r, simple_summary, echo=FALSE}
-cars <- mtcars %>%
-        mutate(Trans=as.factor(am)) %>%
-        group_by(Trans) %>%
-        select(-am, -qsec, -carb, -gear, -drat, -vs)
-levels(cars$Trans)[1] = 'Auto'
-levels(cars$Trans)[2] = 'Manual'
-simple.summary <- summarize(cars, mean(mpg))
+```{r, ref.label='import.dataset', eval=FALSE}
 ```
 
-```{r, simple_test, echo=FALSE}
-simple.test <- t.test(cars[cars$Trans=='Manual',]$mpg,
-                      cars[cars$Trans=='Auto',]$mpg,
-                      alternative='greater')
-```
-Looking at the data in the `mtcars` dataset, the cars with manual transmissions
-appear to have higher fuel efficiency with
-`r simple.summary[simple.summary$Trans==0, 'mean(mpg)'][[1]]` mpg
-compared with
-`r simple.summary[simple.summary$Trans==1, 'mean(mpg)'][[1]]` mpg for
-the cars with automatic transmissions.
-Performing a T-test, ignoring any possible confounding relations, the higher
-fuel efficiency observed in the cars with manual transmissions is shown to be
-significant, with a p-value $< 0.05$, using an alternative hypothesis that
-the cars with an manual transmission have higher fuel efficiency.
-It is, however, possible that there are confounding factors which can explain
-some of this increased fuel efficiency.
+A pairs plot of the attributes in the data set is shown in the appendix.
+The model is developed by, first including all the candidated attributes
+and their interactions, and successively removing attributes from the model
+whos coefficients are shown to be insignificant.
+A cross check is perfirmed using a nested model test.
 
-```{r, explratory_plots, echo=FALSE, warning=FALSE, message=FALSE}
-# plot(cars, col=cars$Trans, pch=16, size=0.5)
-# pairs.plot <- ggpairs(cars[,c('mpg', 'wt', 'cyl', 'Trans')], color='Trans', alpha=0.4)
-#pairs.plot <- ggpairs(cars, color='Trans', alpha=0.4)
-#pairs.plot
+The initial model includes all the relevent attributes and their interaction
+terms.
+
+```{r, ref.label='define.basic.fit', eval=FALSE}
 ```
 
-```{r, exploratory_plots, echo=FALSE, warning=FALSE, message=FALSE, fig.height=10, fig.width=10}
+```{r}
+summary(update(fit, mpg ~ as.factor(Trans) + wt + cyl + hp +
+                 as.factor(Trans)*wt + as.factor(Trans)*cyl +
+                 as.factor(Trans)*hp + wt*cyl + wt*hp + cyl*hp))$coefficients
+```
+
+It is clear that many terms have coefficients which are not significant
+based on the $p$-value.
+Terms were successively remvoved from the model, starting with least significant
+coefficients, until the final model has all signifant terms.
+
+```{r, ref.label='define.final.fit', eval=FALSE}
+```
+
+```{r}
+summary(final.fit.result)$coefficients
+```
+
+The important attributes for this model are the transmission type, the weight,
+and the number of cylinders, and the interaction between the transmission type
+and the weight.
+The resudiduals obtained by comparing the predictions from this model with
+the observed fuel efficiencies in the `mtcars` dataset are shown here.
+
+```{r, fig.height=3}
+hist(residuals(final.fit.result), breaks = (-3:4)*2, col='steelblue',
+     xlab='Resdiual', main='Model residuals')
+```
+
+## Interpretation
+This model suggests that a difference of
+`r final.fit.result$coefficients[['as.factor(Trans)Manual']]` $\pm$
+`r summary(final.fit.result)$coefficients['as.factor(Trans)Manual','Std. Error']`
+miles per gallon can be attributed to the type of transmission, where cars with an automatic
+transmission tend to have lower fuel efficiency.
+
+## Appendix
+
+```{r, exploratory_plots, echo=TRUE, warning=FALSE, message=FALSE, fig.height=10, fig.width=10}
 cars.sub <- cars[,c('mpg', 'wt', 'cyl', 'Trans')]
 cars.sub <- cars
 pairs.plot <- ggpairs(cars.sub,
@@ -79,64 +138,21 @@ for (itx in seq_along(cars.labels)) {
     }
     x.label <- cars.labels[itx]
     y.label <- cars.labels[ity]
-    if (x.label == 'Trans' || y.label == 'Trans') {
+    if (class(cars[[x.label]]) == 'factor' ||
+        class(cars[[y.label]]) == 'factor') {
       next
     }
     tmp.aes <- aes_string(x=x.label, y=y.label, color='Trans')
-    corr.plot <- ggally_cor(cars.sub, tmp.aes, size=corr.font.size)
+    corr.plot <- ggally_cor(cars.sub,
+                            tmp.aes,
+                            size=corr.font.size)
 
     pairs.plot <- putPlot(pairs.plot, corr.plot, ity, itx)
   }
 }
 
-# itx <- 2
-# ity <- 1
-# x.label <- cars.labels[itx]
-# y.label <- cars.labels[ity]
-# tmp.aes <- aes(x='cyl', y='mpg', color='Trans')
-# corr.plot <- ggally_cor(cars.sub, tmp.aes, size=20)
-# 
-# pairs.plot <- putPlot(pairs.plot, corPlot, 1, )
-
 pairs.plot +
   theme(text = element_text(size=12),
         axis.text.x = element_text(angle=0, size=10),
-        axis.text.y = element_text(angle=0, size=10)) 
-```
-
-```{r, fit.vs.weight, echo=FALSE} 
-fit.result.no.interaction <- with(cars, lm(mpg ~ wt + as.factor(Trans)))
-fit.result.with.interaction <- with(cars, lm(mpg ~ wt + as.factor(Trans) + wt*as.factor(Trans)))
-```
-
-```{r}
-with(cars, plot(mpg~wt, col=Trans))
-abline(c(fit.result.no.interaction$coefficients[1],
-         fit.result.no.interaction$coefficients[2]),
-       col='black', lwd=2)
-abline(c(fit.result.no.interaction$coefficients[1], fit.result.no.interaction$coefficients[2]), col='red')
-abline(c(fit.result.no.interaction$coefficients[1] +
-           fit.result.no.interaction$coefficients[3],
-         fit.result.no.interaction$coefficients[2]),
-       col='red', lwd=2)
-
-abline(c(fit.result.with.interaction$coefficients[1],
-         fit.result.with.interaction$coefficients[2]),
-       col='black', lty=2, lwd=2)
-abline(c(fit.result.with.interaction$coefficients[1] +
-           fit.result.with.interaction$coefficients[3],
-         fit.result.with.interaction$coefficients[2] +
-           fit.result.with.interaction$coefficients[4]),
-       col='red', lty=2, lwd=2)
-```
-
-## Interpretation
-#### TODO Write about interpretation of data
-```{r}
-library(ggplot2)
-```
-
-## Appendix
-
-```{r ref.label=knitr::all_labels(), eval=FALSE}
+        axis.text.y = element_text(angle=0, size=10))
 ```
