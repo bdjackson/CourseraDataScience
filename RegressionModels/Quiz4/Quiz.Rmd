@@ -1,52 +1,164 @@
-# Quiz 1
+# Quiz 4
 
 ## Question 1
 
-Answer:
+Consider the space shuttle data `?shuttle` in the `MASS` library.
+Consider modeling the use of the autolander as the outcome (variable name `use`).
+Fit a logistic regression model with autolander (variable auto) use
+(labeled as "auto" 1) versus not (0) as predicted by wind sign (variable wind).
+Give the estimated odds ratio for autolander use comparing head winds, labeled
+as "head" in the variable headwind (numerator) to tail winds (denominator).
 
+### Answer:
+
+```{r}
+library(dplyr)
+library(MASS)
+my.shuttle <- shuttle %>% mutate(use = factor(use, levels(use)[c(2,1)]))
+head(my.shuttle)
+levels(my.shuttle$use)
+levels(my.shuttle$wind)
+```
+
+```{r}
+mdl <- glm(use ~ wind, 'binomial', data=my.shuttle)
+summary(mdl)
+```
+
+```{r}
+odds.head <- exp(mdl$coefficients[['(Intercept)']])
+odds.tail <- exp(mdl$coefficients[['(Intercept)']] + mdl$coefficients[['windtail']])
+odds.ratio <- odds.head/odds.tail
+```
+The odds ratio is `r round(odds.ratio, 5)`.
+
+#### Cross check
+```{r}
+num.headwind <- nrow(shuttle[shuttle$wind == 'head',])
+num.headwind.use <- nrow(shuttle[shuttle$wind == 'head' & shuttle$use == 'auto',])
+
+num.tailwind <- nrow(shuttle[shuttle$wind == 'tail',])
+num.tailwind.use <- nrow(shuttle[shuttle$wind == 'tail' & shuttle$use == 'auto',])
+
+odds.head.check <- num.headwind.use/(num.headwind-num.headwind.use)
+odds.tail.check <- num.tailwind.use/(num.tailwind-num.tailwind.use)
+odds.head.check/odds.tail.check
+```
 
 ## Question 2
 
-Answer:
+Consider the previous problem.
+Give the estimated odds ratio for autolander use comparing head winds
+(numerator) to tail winds (denominator) adjusting for wind strength from the
+variable magn.
 
+### Answer:
+
+```{r}
+my.shuttle <- my.shuttle %>% mutate(magn = factor(magn, levels(magn)[c(1,2,4,3)]))
+```
+
+```{r}
+mdl <- glm(use ~ wind + magn, 'binomial', data=my.shuttle)
+summary(mdl)
+```
+
+```{r}
+odds.head <- exp(mdl$coefficients[['(Intercept)']])
+odds.tail <- exp(mdl$coefficients[['(Intercept)']] + mdl$coefficients[['windtail']])
+odds.ratio <- odds.head/odds.tail
+```
+The odds ratio is `r round(odds.ratio, 5)`.
 
 ## Question 3
 
-Answer:
+If you fit a logistic regression model to a binary variable, for example use of
+the autolander, then fit a logistic regression model for one minus the outcome
+(not using the autolander) what happens to the coefficients?
 
+### Answer:
+
+Flip sign.
+
+#### Cross check
+Recall the regression with auto = 2, and no auto = 1 gave.
+
+```{r}
+glm(use ~ wind, 'binomial', data=my.shuttle)$coef
+```
+
+```{r}
+glm(use ~ wind, 'binomial', data=shuttle)$coef
+```
 
 ## Question 4
 
-Answer:
+Consider the insect spray data `InsectSprays`.
+Fit a Poisson model using spray as a factor level. Report the estimated relative
+rate comapring spray A (numerator) to spray B (denominator).
 
+### Answer:
+
+```{r}
+mdl <- glm(count ~ spray, 'poisson',
+           data=InsectSprays[InsectSprays$spray == 'A' |
+                               InsectSprays$spray == 'B',])
+mdl$coef
+```
+
+```{r}
+rate.ratio <- exp(mdl$coefficients[1])/exp(mdl$coefficients[1] +
+                                             mdl$coefficients[2])
+```
+
+The ratio of the rates is `r round(rate.ratio, 5)`.
 
 ## Question 5
 
-Answer:
+Consider a Poisson glm with an offset, $t$. So, for example, a model of the form
+`glm(count ~ x + offset(t), family = poisson)` where `x` is a factor variable
+comparing a treatment (1) to a control (0) and `t` is the natural log of a
+monitoring time.
+What is impact of the coefficient for `x` if we fit the model
+`glm(count ~ x + offset(t2), family = poisson)` where `t2 <- log(10) + t`?
+In other words, what happens to the coefficients if we change the units of the
+offset variable.
+(Note, adding log(10) on the log scale is multiplying by 10 on the original
+scale.)
 
+### Answer:
+
+The coefficients should remain unchanged.
 
 ## Question 6
 
-Answer:
+Consider the data
 
+```{r}
+x <- -5:5
+y <- c(5.12, 3.93, 2.67, 1.87, 0.52, 0.08, 0.93, 2.05, 2.54, 3.87, 4.97)
+```
 
-## Question 7
+Using a knot point at 0, fit a linear model that looks like a hockey stick with
+two lines meeting at x=0.
+Include an intercept term, x and the knot point term. What is the estimated
+slope of the line after 0?
 
-Answer:
+### Answer:
 
+```{r}
+plot(x, y, pch = 21, bg='lightblue', cex=2)
+```
 
-## Question 8
+```{r}
+spline = (x>0)*x
+rhs <- cbind(x, spline)
+fit <- lm(y ~ rhs)
+summary(fit)
+yhat <- predict(fit)
+plot(x, y, pch = 21, bg='lightblue', cex=2)
+lines(x, yhat, col='red', lwd=2)
+```
 
-Answer:
-
-
-## Question 9
-
-Answer:
-
-
-## Question 10
-
-Answer:
-
-
+The slope after $x=0$ is
+`r round(fit$coef['rhsx'] + fit$coef['rhsspline'], 5)`.
